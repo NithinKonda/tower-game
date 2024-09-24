@@ -1,6 +1,8 @@
 import React from 'react'
 
-const TowerMenu = ({onBuildTower}) => {
+const TowerMenu = ({onBuildTower} : {
+  onBuildTower: (tower: {type: string, cost: number}) => void
+}) => {
   return (
     <div className='flex justify-center mt-4'>
         <button

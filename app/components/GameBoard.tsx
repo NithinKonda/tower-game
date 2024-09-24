@@ -3,7 +3,11 @@ import Enemy from './Enemy';
 
 const gridSize = 10; // for a 10x10 grid
 
-export default function GameBoard({ towers, enemies, onPlaceTower }) {
+export default function GameBoard({ towers, enemies, onPlaceTower } : {
+    towers: { position: { x: number, y: number }, type: string }[],
+    enemies: { position: { x: number, y: number }, speed: number, health: number }[],
+    onPlaceTower: (position: { x: number, y: number }) => void
+}) {
   const renderGrid = () => {
     const grid = [];
     for (let row = 0; row < gridSize; row++) {
