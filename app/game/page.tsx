@@ -1,63 +1,86 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import GameBoard from '../components/GameBoard';
 import PlayerStats from '../components/PlayerStats';
 import TowerMenu from '../components/TowerMenu';
 
 export default function GamePage() {
-    const [towers, setTowers] = useState([]);
-    const [enemies, setEnemies] = useState([
-        { position: { x: 0, y: 0 }, speed: 1, health: 100 },
-    ]);
-    const [playerStats, setPlayerStats] = useState({ health: 100, money: 50 });
+  const [towers, setTowers] = useState([]);
+  const [enemies, setEnemies] = useState([
+    { position: { x: 0, y: 0 }, speed: 0.005, health: 100, progress: 0 }, // Add progress for interpolation
+  ]);
+  const [playerStats, setPlayerStats] = useState({ health: 100, money: 50 });
 
-    const handlePlaceTower = (position :
-        { x: number, y: number }
-    ) => {
-        setTowers([...towers, { position, type: 'basic' }]);
-        setPlayerStats((prevStats) => ({ ...prevStats, money: prevStats.money - 10 }));
-    };
+  const handlePlaceTower = (position) => {
+    setTowers([...towers, { position, type: 'basic' }]);
+  };
 
-    const path = [
-        { x: 0, y: 0 },
-        { x: 1, y: 0 },
-        { x: 2, y: 0 },
-        { x: 3, y: 0 },
-        { x: 4, y: 0 },
-        { x: 5, y: 0 },
-        { x: 6, y: 0 },
-        { x: 7, y: 0 },
-        { x: 8, y: 0 },
-        { x: 9, y: 0 },
-        { x: 9, y: 1 },
-        { x: 9, y: 2 },
-        { x: 9, y: 3 },
-    ];
+  const path = [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 2, y: 0 },
+    { x: 3, y: 0 },
+    { x: 4, y: 0 },
+    { x: 5, y: 0 },
+    { x: 6, y: 0 },
+    { x: 7, y: 0 },
+    { x: 8, y: 0 },
+    { x: 9, y: 0 },
+    { x: 9, y: 1 },
+    { x: 9, y: 2 },
+    { x: 9, y: 3 },
+  ];
 
-    useEffect(() => {
-        const moveEnemies = setInterval(() => {
-            setEnemies((currentEnemies) => {
-                return currentEnemies.map((enemy) => {
-                    const currentIndex = path.findIndex(
-                        (point) => point.x === enemy.position.x && point.y === enemy.position.y
-                    );
-                    if (currentIndex < path.length - 1) {
-                        return { ...enemy, position: path[currentIndex + 1] };
-                    } else {
-                        return enemy;
-                    }
-                });
-            });
-        }, 1000 / enemies[0].speed);
+  // Ref to store animation frame
+  const animationRef = useRef();
 
-        return () => clearInterval(moveEnemies);
-    }, [enemies, path]);
+  const updateEnemyPosition = () => {
+    setEnemies((currentEnemies) =>
+      currentEnemies.map((enemy) => {
+        const currentIndex = Math.floor(enemy.progress); // Find the current point on the path
+        const nextIndex = currentIndex + 1;
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
-            <PlayerStats stats={playerStats} />
-            <GameBoard towers={towers} enemies={enemies} onPlaceTower={handlePlaceTower} />
-            <TowerMenu onBuildTower={handlePlaceTower} />
-        </div>
+        if (nextIndex < path.length) {
+          const currentPoint = path[currentIndex];
+          const nextPoint = path[nextIndex];
+
+          // Interpolation between current and next points
+          const progressBetweenPoints = enemy.progress - currentIndex;
+
+          const newX = currentPoint.x + (nextPoint.x - currentPoint.x) * progressBetweenPoints;
+          const newY = currentPoint.y + (nextPoint.y - currentPoint.y) * progressBetweenPoints;
+
+          // Increase progress based on speed
+          const newProgress = enemy.progress + enemy.speed;
+
+          return {
+            ...enemy,
+            position: { x: newX, y: newY },
+            progress: newProgress, // Keep updating progress
+          };
+        } else {
+          return enemy; // Enemy stays at the final point if the path ends
+        }
+      })
     );
+
+    // Continue the animation
+    animationRef.current = requestAnimationFrame(updateEnemyPosition);
+  };
+
+  useEffect(() => {
+    // Start the animation loop
+    animationRef.current = requestAnimationFrame(updateEnemyPosition);
+
+    // Cleanup on component unmount
+    return () => cancelAnimationFrame(animationRef.current);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
+      <PlayerStats stats={playerStats} />
+      <GameBoard towers={towers} enemies={enemies} onPlaceTower={handlePlaceTower} />
+      <TowerMenu onBuildTower={handlePlaceTower} />
+    </div>
+  );
 }
