@@ -1,7 +1,7 @@
 import Tower from './Tower';
 import Enemy from './Enemy';
 
-const gridSize = 10; // for a 10x10 grid
+const gridSize = 10;
 
 export default function GameBoard({ towers, enemies, onPlaceTower } : {
     towers: { position: { x: number, y: number }, type: string }[],
@@ -16,7 +16,7 @@ export default function GameBoard({ towers, enemies, onPlaceTower } : {
           <div
             key={`${row}-${col}`}
             className="w-16 h-16 border border-gray-500 hover:bg-gray-700 flex items-center justify-center"
-            onClick={() => onPlaceTower({ x: col, y: row })} // Pass position here
+            onClick={() => onPlaceTower({ x: col, y: row })}
           >
             {towers.find(tower => tower.position.x === col && tower.position.y === row) && <Tower />}
           </div>

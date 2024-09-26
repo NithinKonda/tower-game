@@ -7,13 +7,19 @@ import TowerMenu from '../components/TowerMenu';
 export default function GamePage() {
   const [towers, setTowers] = useState([]);
   const [enemies, setEnemies] = useState([
-    { position: { x: 0, y: 0 }, speed: 0.005, health: 100, progress: 0 }, // Add progress for interpolation
+    { position: { x: 0, y: 0 }, speed: 0.005, health: 100, progress: 0 },
   ]);
   const [playerStats, setPlayerStats] = useState({ health: 100, money: 50 });
 
   const handlePlaceTower = (position) => {
     setTowers([...towers, { position, type: 'basic' }]);
+
+    setPlayerStats((prevStats) => ({
+      ...prevStats,
+      money: prevStats.money - 10,
+    }));
   };
+
 
   const path = [
     { x: 0, y: 0 },
@@ -31,48 +37,45 @@ export default function GamePage() {
     { x: 9, y: 3 },
   ];
 
-  // Ref to store animation frame
   const animationRef = useRef();
 
   const updateEnemyPosition = () => {
-    setEnemies((currentEnemies) =>
-      currentEnemies.map((enemy) => {
-        const currentIndex = Math.floor(enemy.progress); // Find the current point on the path
-        const nextIndex = currentIndex + 1;
+    setEnemies((currentEnemies) => {
+      return currentEnemies
+        .map((enemy) => {
+          const currentIndex = Math.floor(enemy.progress);
+          const nextIndex = currentIndex + 1;
 
-        if (nextIndex < path.length) {
-          const currentPoint = path[currentIndex];
-          const nextPoint = path[nextIndex];
+          if (nextIndex >= path.length) {
+            setPlayerStats((prevStats) => ({
+              ...prevStats,
+              health: prevStats.health - 10,
+            }));
+            return null;
+          } else {
+            const currentPoint = path[currentIndex];
+            const nextPoint = path[nextIndex];
 
-          // Interpolation between current and next points
-          const progressBetweenPoints = enemy.progress - currentIndex;
+            const progressBetweenPoints = enemy.progress - currentIndex;
+            const newX = currentPoint.x + (nextPoint.x - currentPoint.x) * progressBetweenPoints;
+            const newY = currentPoint.y + (nextPoint.y - currentPoint.y) * progressBetweenPoints;
+            const newProgress = enemy.progress + enemy.speed;
 
-          const newX = currentPoint.x + (nextPoint.x - currentPoint.x) * progressBetweenPoints;
-          const newY = currentPoint.y + (nextPoint.y - currentPoint.y) * progressBetweenPoints;
+            return {
+              ...enemy,
+              position: { x: newX, y: newY },
+              progress: newProgress,
+            };
+          }
+        })
+        .filter(Boolean);
+    });
 
-          // Increase progress based on speed
-          const newProgress = enemy.progress + enemy.speed;
-
-          return {
-            ...enemy,
-            position: { x: newX, y: newY },
-            progress: newProgress, // Keep updating progress
-          };
-        } else {
-          return enemy; // Enemy stays at the final point if the path ends
-        }
-      })
-    );
-
-    // Continue the animation
     animationRef.current = requestAnimationFrame(updateEnemyPosition);
   };
 
   useEffect(() => {
-    // Start the animation loop
     animationRef.current = requestAnimationFrame(updateEnemyPosition);
-
-    // Cleanup on component unmount
     return () => cancelAnimationFrame(animationRef.current);
   }, []);
 

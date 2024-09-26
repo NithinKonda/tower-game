@@ -1,9 +1,8 @@
 export default function PlayerStats({ stats }) {
-    return (
-      <div className="flex justify-between bg-gray-800 p-4 w-full max-w-md rounded mb-4">
-        <p className="text-green-400">Health: {stats.health}</p>
-        <p className="text-yellow-400">Money: {stats.money}</p>
-      </div>
-    );
-  }
-  
+  return (
+    <div className="mb-4">
+      <div className="text-white">Health: {stats.health}</div>
+      <div className="text-white">Money: {stats.money}</div>
+    </div>
+  );
+}
