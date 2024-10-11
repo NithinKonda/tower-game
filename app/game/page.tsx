@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect, useRef } from 'react';
 import GameBoard from '../components/GameBoard';
 import PlayerStats from '../components/PlayerStats';
@@ -6,20 +6,17 @@ import TowerMenu from '../components/TowerMenu';
 
 export default function GamePage() {
   const [towers, setTowers] = useState([]);
+  const [generators, setGenerators] = useState([true, true, true, true, true])
   const [enemies, setEnemies] = useState([]);
   const [playerStats, setPlayerStats] = useState({ health: 100, money: 50 });
   const [currentWave, setCurrentWave] = useState(1);
   const [isWaveActive, setIsWaveActive] = useState(false);
 
-  const path = [
-    { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 },
-    { x: 5, y: 0 }, { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 }, { x: 9, y: 0 },
-    { x: 9, y: 1 }, { x: 9, y: 2 }, { x: 9, y: 3 },
-    { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 },
-    { x: 5, y: 0 }, { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 }, { x: 9, y: 0 },
-    { x: 9, y: 1 }, { x: 9, y: 2 }, { x: 9, y: 3 },
-  ];
+  // Define possible rows for enemies to spawn (random row per enemy)
+  const availableRows = [0, 1, 2, 3]; // Adjust based on your grid
 
+  // Grid with only X direction (left to right)
+  const path = Array.from({ length: 10 }, (_, i) => ({ x: i }));
 
   const handlePlaceTower = (position) => {
     setTowers([...towers, { position, type: 'basic' }]);
@@ -38,12 +35,13 @@ export default function GamePage() {
     const newEnemies = [];
 
     for (let i = 0; i < numEnemies; i++) {
+      const randomRow = availableRows[Math.floor(Math.random() * availableRows.length)];
+
       newEnemies.push({
-        position: { x: 0, y: 0 },
+        position: { x: 0, y: randomRow }, // Start at the left, random row
         speed: 0.005 + wave * 0.001, // Increase speed slightly with each wave
         health: 100 + wave * 20, // Increase health with each wave
         progress: 0,
-        spawnDelay: i * 1000, // Delay each enemy spawn by 1 second
       });
     }
 
@@ -72,7 +70,8 @@ export default function GamePage() {
           const nextPoint = path[nextIndex];
           const progressBetweenPoints = enemy.progress - currentIndex;
           const newX = currentPoint.x + (nextPoint.x - currentPoint.x) * progressBetweenPoints;
-          const newY = currentPoint.y + (nextPoint.y - currentPoint.y) * progressBetweenPoints;
+          const newY = enemy.position.y; // Y stays the same (randomized row)
+
           const newProgress = enemy.progress + enemy.speed;
 
           return { ...enemy, position: { x: newX, y: newY }, progress: newProgress };
@@ -92,7 +91,7 @@ export default function GamePage() {
       setTimeout(() => {
         setCurrentWave((prevWave) => prevWave + 1);
         spawnEnemiesForWave(currentWave + 1);
-      }, 3000); // Wait 3 seconds before the next wave
+      }, 3000);
     }
   }, [enemies, isWaveActive, currentWave]);
 
